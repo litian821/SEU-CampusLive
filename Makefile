@@ -23,7 +23,7 @@ logs:
 test: test-api test-web config
 
 test-api:
-	docker compose run --rm api pytest
+	docker compose run --rm api-test
 
 test-web:
 	docker compose run --rm web-build npm run check
