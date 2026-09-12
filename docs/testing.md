@@ -49,3 +49,5 @@ npm test
 ```
 
 测试真实播放、暂停、拖动及继续播放，缺失视频、未知页面、手机布局和未捕获页面异常。已安装 Microsoft Edge 时可设置 `BROWSER_CHANNEL=msedge`；服务不在默认端口时设置 `BASE_URL`。设置 `LIVE_TEST_ID` 为当前正在推流的测试频道，会额外验证首次 HLS 404 后自动恢复和实际播放进度；不会替你启动或停止 OBS。可设置 `SCREENSHOT_DIR` 为 Git 外的输出目录保存截图。
+
+本轮实际结果与未验证范围见 [2026-09-13 验收记录](validation-2026-09-13.md)。
