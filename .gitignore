@@ -48,3 +48,4 @@ storage/logs/*
 *.swp
 Thumbs.db
 .DS_Store
+*.egg-info/
