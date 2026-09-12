@@ -1,0 +1,1 @@
+"""Campus sports platform API."""
