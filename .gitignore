@@ -49,3 +49,8 @@ storage/logs/*
 Thumbs.db
 .DS_Store
 *.egg-info/
+
+*.tsbuildinfo
+
+# Per-machine build network/proxy overrides
+compose.override.yaml

@@ -23,7 +23,15 @@ logs:
 test: test-api test-web config
 
 test-api:
-	docker compose run --rm api-test
+	docker compose run --build --rm api-test
 
 test-web:
-	docker compose run --rm web-build npm run check
+	docker compose run --build --rm web-build npm run check
+
+.PHONY: smoke
+smoke:
+	python3 tests/smoke.py
+
+.PHONY: test-media
+test-media:
+	python3 tests/media_smoke.py

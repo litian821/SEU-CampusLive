@@ -22,6 +22,12 @@
 ## 常见问题
 
 - 页面显示等待直播：确认 OBS 正在推流，并检查 `docker compose logs media`。
-- OBS 无法连接：确认 1935 端口映射、Docker Desktop 与 Windows 防火墙。
+- OBS 无法连接：确认 1935 端口映射、Docker 服务与 Windows 防火墙。
 - 有画面无声音：确认 OBS 音频编码为 AAC。
 - 点播无法拖动：用浏览器网络面板确认媒体请求返回 `206 Partial Content`。
+
+## 频道与等待开播
+
+`.env` 中 `LIVE_STREAM_KEY` 设置默认频道 ID，`LIVE_TITLE`、`LIVE_SPORT`、`LIVE_VENUE` 设置展示信息。RTMP 应用固定为 `live`；其他合法流名推流后会自动显示在列表。直播状态表示正在推流，HLS 分片就绪仍需几秒；播放器按退避策略重连。SRS 管理端口 1985 默认只供本机访问。
+
+`.part` 后缀和隐藏文件不会进入点播目录；先完成复制再改名为 `.mp4`。符号链接和空文件也不发布。
