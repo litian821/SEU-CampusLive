@@ -13,7 +13,7 @@
 
 ## HLS 路径
 
-默认流地址为 `/live/<stream-key>.m3u8`。SRS 把分片写入 `storage/live/`，这些临时文件被 `.gitignore` 排除。
+默认流地址为 `/media/live/<stream-key>.m3u8`。SRS 把分片写入 `storage/live/`，Nginx 从该共享目录直接提供播放列表和分片；这些临时文件被 `.gitignore` 排除。
 
 ## 点播文件
 

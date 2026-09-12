@@ -46,7 +46,7 @@ def list_live_streams() -> list[LiveStream]:
             sport="综合",
             venue="主体育场",
             status="ready",
-            playback_url=f"/live/{quote(stream_key)}.m3u8",
+            playback_url=f"/media/live/{quote(stream_key)}.m3u8",
         )
     ]
 

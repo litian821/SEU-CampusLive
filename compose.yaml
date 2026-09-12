@@ -15,7 +15,7 @@ services:
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -53,7 +53,7 @@ services:
     expose:
       - "80"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -70,11 +70,12 @@ services:
         condition: service_started
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./storage/live:/srv/live:ro
       - ./storage/vod:/srv/vod:ro
     ports:
       - "${WEB_PORT:-8080}:80"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/healthz"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
       interval: 10s
       timeout: 3s
       retries: 5

@@ -40,4 +40,4 @@ npm install
 npm run dev
 ```
 
-Web 开发服务器把 `/api`、`/live` 和 `/media` 代理到默认网关地址。环境变量和端口说明维护在 `.env.example`。
+Web 开发服务器把 `/api` 和 `/media` 代理到默认网关地址。环境变量和端口说明维护在 `.env.example`。

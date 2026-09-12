@@ -11,13 +11,13 @@ MVP 只解决两条核心链路：OBS 推流后可在自研 Web 页面观看；�
 | Web | React、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
 | API | FastAPI、Python | 健康检查、直播目录、点播文件索引 |
 | Media | SRS 6 | 接收 RTMP，生成 HLS |
-| Gateway | Nginx | 单一 HTTP 入口、反向代理、点播文件与 Range 请求 |
+| Gateway | Nginx | 单一 HTTP 入口、页面/API 反向代理、直播和点播文件、Range 请求 |
 | Storage | 主机目录 | 保存点播文件和临时直播分片，不进入 Git |
 
 ## 数据流
 
 ```text
-OBS (Windows) --RTMP :1935--> SRS --HLS--> Nginx :8080 --> Web 播放器
+OBS (Windows) --RTMP :1935--> SRS --HLS 文件--> Nginx :8080 --> Web 播放器
 storage/vod ---------------------------> Nginx :8080 --> HTML5 播放器
 storage/vod --> FastAPI 索引 --> Nginx /api --> Web 列表
 ```
