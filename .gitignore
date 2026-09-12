@@ -1,0 +1,50 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node and web builds
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Runtime data and media
+storage/live/*
+storage/vod/*
+storage/db/*
+storage/logs/*
+!storage/live/.gitkeep
+!storage/vod/.gitkeep
+!storage/db/.gitkeep
+!storage/logs/.gitkeep
+*.m3u8
+/storage/live/*.ts
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.flv
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store

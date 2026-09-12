@@ -1,0 +1,75 @@
+name: campus-sports-platform
+
+services:
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_NAME: ${APP_NAME:-Campus Sports Platform}
+      LIVE_APP: ${LIVE_APP:-live}
+      LIVE_STREAM_KEY: ${LIVE_STREAM_KEY:-demo}
+      VOD_DIR: ${VOD_DIR:-/data/vod}
+    volumes:
+      - ./storage/vod:/data/vod:ro
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  media:
+    image: ossrs/srs:6.0.191
+    volumes:
+      - ./infra/srs/srs.conf:/usr/local/srs/conf/docker.conf:ro
+      - ./storage/live:/usr/local/srs/objs/nginx/html/live
+    ports:
+      - "${RTMP_PORT:-1935}:1935"
+      - "${SRS_API_PORT:-1985}:1985"
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  web-build:
+    build:
+      context: ./apps/web
+      target: build
+    command: ["npm", "run", "check"]
+    profiles: ["tools"]
+
+  web:
+    build:
+      context: ./apps/web
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:1.28-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+      media:
+        condition: service_started
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./storage/vod:/srv/vod:ro
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
