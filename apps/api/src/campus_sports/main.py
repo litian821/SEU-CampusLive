@@ -12,6 +12,7 @@ from urllib.request import ProxyHandler, build_opener
 
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, ValidationError
+from .photos import router as photos_router
 
 logger = logging.getLogger(__name__)
 STREAM_NAME = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
@@ -49,7 +50,8 @@ class MediaStreams(BaseModel):
     streams: list[MediaStream]
 
 
-app = FastAPI(title=os.getenv('APP_NAME', 'Campus Sports Platform'), version='0.2.0')
+app = FastAPI(title=os.getenv('APP_NAME', 'Campus Sports Platform'), version='0.3.0')
+app.include_router(photos_router)
 
 
 def fetch_media_streams() -> list[MediaStream]:
@@ -84,9 +86,9 @@ def list_live_streams(response: Response) -> list[LiveStream]:
 
     return [LiveStream(
         id=name,
-        title=os.getenv('LIVE_TITLE', '校园赛事直播') if name == stream_key else f'校园赛事 · {name}',
-        sport=os.getenv('LIVE_SPORT', '综合'),
-        venue=os.getenv('LIVE_VENUE', '主体育场'),
+        title=os.getenv('LIVE_TITLE', '院系杯 · 网络空间安全学院 vs 电子科学与工程学院') if name == stream_key else f'校园赛事 · {name}',
+        sport=os.getenv('LIVE_SPORT', '篮球'),
+        venue=os.getenv('LIVE_VENUE', '东南大学'),
         status=('live' if name in active else 'offline') if available else 'unknown',
         playback_url=f'/media/live/{quote(name, safe="")}.m3u8',
     ) for name in sorted(active | {stream_key}, key=lambda name: (name not in active, name))]

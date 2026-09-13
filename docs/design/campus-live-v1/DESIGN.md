@@ -160,3 +160,7 @@ apps/web/src/
 按用户要求，本阶段等待设计确认；尚未修改 `apps/web`，也尚未进行 Vue 迁移。
 
 参考产品结构：[Red Bull 官方直播栏目](https://www.redbull.com/int-en/live-events/)的直播/回看分流，以及 [Olympic Channel 官方介绍](https://support.olympics.com/hc/en-gb/articles/1500009814861-What-is-Olympic-Channel)的体育项目发现思路。只借鉴组织方式，不复制品牌、界面或内容。
+
+## V2 实施更新
+
+用户指定实拍照片现已替换 AI 生成配图，使用 AI 辅助调色版本。比赛更名为“院系杯 · 网络空间安全学院 vs 电子科学与工程学院”。新增“赛场瞬间”：照片按比赛相册归档，展示原图并支持放大、键盘切换和关闭；真实客户端使用 `/moments`。正式客户端已按此方向迁移到 Vue 3，详情见仓库 `docs/client-gallery.md`。本目录继续保留静态示例，仅用于设计对照。

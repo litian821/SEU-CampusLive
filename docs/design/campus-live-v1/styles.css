@@ -10,3 +10,5 @@
 @media(max-width:540px){.school-context{font-size:8px}.brand{font-size:17px}.header nav{gap:14px}.header nav a{font-size:11px}.chip{min-height:44px}.seu-story{padding:22px 18px}.campus-line{width:100px;position:absolute;bottom:10px;right:8px;opacity:.35}.seu-story p{max-width:240px}.story-kicker{font-size:8px}.seu-story strong{font-size:18px}.match-panel{gap:0 14px}.match-facts{grid-template-columns:44px 1fr;font-size:10px}.team{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 #main:focus{outline:none}
+
+.hero-content h2{font-size:30px}@media(max-width:540px){.hero-content h2{font-size:25px}.header nav{gap:8px}}

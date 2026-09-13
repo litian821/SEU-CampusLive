@@ -1,0 +1,18 @@
+:root {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  --green: #184b3b;
+  --gold: #e8cd72;
+  --gold-hover: #dcbc55;
+  --paper: #f6f5ef;
+  --ink: #18231f;
+  --muted: #68716b;
+  --line: #dce0d7;
+  --soft: #eaece4;
+  --deep: #10241b;
+  --live: #c73530;
+  --max: 1328px;
+  --radius: 8px;
+  color: var(--ink);
+  background: var(--paper);
+}

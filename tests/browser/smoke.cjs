@@ -34,6 +34,19 @@ const fs = require('node:fs');
     await page.goto(base + '/vod/does-not-exist.mp4');
     await page.getByRole('alert').filter({ hasText: '视频不存在或已下架' }).waitFor();
     assert.equal(await page.locator('video').count(), 0);
+    await page.goto(base + '/moments');
+    await page.getByRole('heading', { level: 1, name: '赛场瞬间' }).waitFor();
+    const albums = await (await page.request.get(base + '/api/photos')).json();
+    if (albums.length) {
+      await page.locator('.photo-button').first().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.waitFor();
+      await page.waitForFunction(() => { const img = document.querySelector('dialog img'); return img && img.complete && img.naturalWidth > 0; });
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({ state: 'hidden' });
+      assert(await page.locator('.photo-button').first().evaluate(button => button === document.activeElement));
+      console.log('PASS real photo catalog, image loading, lightbox and focus restoration');
+    }
     await page.goto(base + '/not-found');
     await page.getByRole('heading', { name: '页面不存在' }).waitFor();
 

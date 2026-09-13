@@ -1,11 +1,9 @@
-# 设计素材说明
+# 当前照片素材
 
-`campus-basketball.png` 是通过内置 image_gen 生成的原创界面示意素材，采用全新生成模式，没有参考图。不是东南大学实拍，也不证明任何赛事真实发生。预览已标注这一点。其余场地和大礼堂意象为预览代码内的原创 SVG。
+`seu-basketball-graded.png` 由用户提供的真实篮球照片经内置 image_gen 编辑模式处理：提亮人物、中间调和暗部，压住高光，加入克制的松青阴影与暖色肤调。属于 AI 辅助调色版本，不应作为未经处理的新闻原图。原始 JPEG 保存在 Git 忽略的 `storage/photos/`，相册展示原图。旧 AI 生成配图已停用。
 
-生成时的完整 prompt：
+完整编辑 prompt：
 
 ```text
-Use case: photorealistic-natural. Asset type: original editorial hero photograph for a Chinese university campus sports live streaming product design concept (not an actual documented event). A college basketball game in an indoor university gym, Chinese adult college student athletes in plain dark forest green and warm white uniforms, one athlete in green attacking the rim with a basketball on the right half of the frame, two defenders, university student audience softly out of focus in modest bleachers, natural sports photojournalism, energetic but believable anatomy and ball placement. Landscape 16:9 composition, entire left 40 percent is dim gym negative space suitable for overlaying headline later, action and hoop primarily in right half. Muted forest tones, warm hardwood flooring and natural stadium light, subtle analog grain, crisp authentic texture, realistic campus scale, no professional league branding, no readable signs, no text, no logos, no watermark. This is only a photo asset, do not generate webpage UI.
+Use case: lighting-weather. Edit target: the user's attached real photograph of a Southeast University basketball game (black/red and blue uniforms under an outdoor roof, black jersey number 5 on the right). Perform restrained professional photographic exposure and color grading ONLY. Lift the underexposed players and midtones by roughly 1.2 stops, retain controlled bright lamps and roof highlights, lightly reduce shadow noise, maintain natural skin tones, subtly cool deep shadows toward forest green while warming highlights gently. This is for Campus Live with forest green #184B3B and warm gold #E8CD72 brand accents, but do NOT recolor uniforms. Preserve exactly all existing people's identities, faces, bodies, gestures, positions, ball/hoop, roof, jersey numbers, existing Chinese lettering, and photographic composition. Keep the original landscape 3:2 framing; no new objects, no removal, no added text or logo, no illustration, no beauty retouching. This must remain recognizably the same documentary photo, brighter and clearer, with tasteful natural contrast rather than heavy cinematic tint. Preserve the darker empty upper-left roof region for later website text overlay.
 ```
-
-正式赛事上线时优先换成团队有权使用的真实封面；无封面使用统一线稿。

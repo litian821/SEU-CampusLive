@@ -24,10 +24,12 @@ coverage/
 # Runtime data and media
 storage/live/*
 storage/vod/*
+storage/photos/*
 storage/db/*
 storage/logs/*
 !storage/live/.gitkeep
 !storage/vod/.gitkeep
+!storage/photos/.gitkeep
 !storage/db/.gitkeep
 !storage/logs/.gitkeep
 *.m3u8

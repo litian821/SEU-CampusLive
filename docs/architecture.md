@@ -8,7 +8,7 @@ MVP 只解决两条核心链路：OBS 推流后可在自研 Web 页面观看；�
 
 | 组件 | 技术 | 职责 |
 | --- | --- | --- |
-| Web | React、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
+| Web | Vue 3、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
 | API | FastAPI、Python | 健康检查、直播目录、点播文件索引 |
 | Media | SRS 6 | 接收 RTMP，生成 HLS |
 | Gateway | Nginx | 单一 HTTP 入口、页面/API 反向代理、直播和点播文件、Range 请求 |

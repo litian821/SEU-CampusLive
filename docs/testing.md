@@ -27,7 +27,7 @@ make test-web
 
 ## 回归检查
 
-- `make test` 会重新构建测试镜像，包含 API 单元测试、Vitest React 组件测试、类型检查、生产构建与 Compose 配置验证。
+- `make test` 会重新构建测试镜像，包含 API 单元测试、Vitest Vue 3 组件测试、类型检查、生产构建与 Compose 配置验证。
 - `docker compose up --build --wait --wait-timeout 120` 等待四个服务健康，再运行 `make smoke`。自定义 Web 端口时执行 `BASE_URL=http://127.0.0.1:<port> make smoke`。
 - GitHub Actions 工作流已配置，但在未连接 GitHub 之前只能在本地执行等价检查，不能声称远程 CI 已通过。
 - 浏览器验收：未开播频道显示“尚未开播”；打开播放页再推流，等待自动重连；停止再恢复推流后重新播放；点播搜索、缺失详情、中文/百分号文件名、播放/暂停/拖动都应可用。
