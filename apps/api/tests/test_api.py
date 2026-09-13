@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from urllib.error import URLError
 
@@ -12,6 +13,7 @@ client = TestClient(main.app)
 def media_available(monkeypatch):
     monkeypatch.setattr(main, 'fetch_media_streams', lambda: [])
     monkeypatch.setenv('LIVE_STREAM_KEY', 'demo')
+    monkeypatch.delenv('LIVE_MATCHES_JSON', raising=False)
 
 
 def test_health():
@@ -34,6 +36,68 @@ def test_active_streams_are_discovered_and_filtered(monkeypatch):
     data = client.get('/api/live').json()
     assert {s['id']: s['status'] for s in data} == {'basketball': 'live', 'demo': 'live'}
     assert client.get('/api/live/basketball').status_code == 200
+
+
+def test_multiple_matches_and_camera_angles(monkeypatch):
+    monkeypatch.setenv('LIVE_MATCHES_JSON', json.dumps([
+        {
+            'id': 'faculty-cup',
+            'title': '院系杯决赛',
+            'sport': '篮球',
+            'venue': '九龙湖体育馆',
+            'angles': [
+                {'stream_id': 'final-main', 'name': '主机位'},
+                {'stream_id': 'final-hoop', 'name': '篮下机位'},
+            ],
+        },
+        {
+            'id': 'football-friendly',
+            'title': '足球友谊赛',
+            'sport': '足球',
+            'venue': '桃园田径场',
+            'angles': [{'stream_id': 'football-main', 'name': '全景机位'}],
+        },
+    ], ensure_ascii=False))
+    monkeypatch.setattr(main, 'fetch_media_streams', lambda: [
+        main.MediaStream(name='final-hoop', app='live', publish={'active': True}),
+        main.MediaStream(name='walk-on', app='live', publish={'active': True}),
+    ])
+
+    response = client.get('/api/matches')
+    assert response.headers['cache-control'] == 'no-store'
+    matches = {match['id']: match for match in response.json()}
+    assert set(matches) == {'faculty-cup', 'football-friendly', 'walk-on'}
+    assert matches['faculty-cup']['status'] == 'live'
+    assert [(angle['id'], angle['status']) for angle in matches['faculty-cup']['angles']] == [
+        ('final-main', 'offline'), ('final-hoop', 'live'),
+    ]
+    assert matches['football-friendly']['status'] == 'offline'
+    assert matches['walk-on']['angles'][0]['playback_url'] == '/media/live/walk-on.m3u8'
+    assert client.get('/api/matches/faculty-cup').json()['angles'][1]['name'] == '篮下机位'
+
+
+def test_legacy_match_endpoint_keeps_demo_compatible():
+    match = client.get('/api/matches/demo').json()
+    assert match['id'] == 'demo'
+    assert match['angles'] == [{
+        'id': 'demo', 'name': '主机位', 'status': 'offline',
+        'playback_url': '/media/live/demo.m3u8',
+    }]
+
+
+@pytest.mark.parametrize('config', [
+    '{bad-json',
+    '[]',
+    json.dumps([{'id': '../bad', 'title': '比赛', 'sport': '篮球', 'venue': '体育馆', 'angles': [{'stream_id': 'cam1', 'name': '主机位'}]}]),
+    json.dumps([
+        {'id': 'a', 'title': '比赛 A', 'sport': '篮球', 'venue': '体育馆', 'angles': [{'stream_id': 'same', 'name': '主机位'}]},
+        {'id': 'b', 'title': '比赛 B', 'sport': '足球', 'venue': '田径场', 'angles': [{'stream_id': 'same', 'name': '主机位'}]},
+    ]),
+])
+def test_invalid_match_config_returns_503(monkeypatch, config):
+    monkeypatch.setenv('LIVE_MATCHES_JSON', config)
+    assert client.get('/api/matches').status_code == 503
+    assert client.get('/api/live').status_code == 503
 
 
 @pytest.mark.parametrize('failure', [URLError('offline'), TimeoutError(), ValueError('malformed response')])

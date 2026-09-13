@@ -1,4 +1,4 @@
-import type { LiveStream, VodItem } from '../api'
+import type { LiveMatch, LiveStatus, VodItem } from '../api'
 export const campusMatch = {
   title: '院系杯 · 网络空间安全学院 vs 电子科学与工程学院',
   teams: ['网络空间安全学院', '电子科学与工程学院'],
@@ -7,10 +7,12 @@ export const campusMatch = {
 }
 export type MediaCard = {
   id: string; title: string; sport: string; href: string; description: string
-  meta: string; cover?: string; status?: LiveStream['status']
+  meta: string; cover?: string; status?: LiveStatus
 }
-export function liveCard(item: LiveStream): MediaCard {
-  return { ...item, href: `/live/${encodeURIComponent(item.id)}`, description: item.venue,
+export function liveCard(item: LiveMatch): MediaCard {
+  const onlineAngles = item.angles.filter(angle => angle.status === 'live').length
+  return { ...item, href: `/live/${encodeURIComponent(item.id)}`,
+    description: `${item.venue} · ${item.angles.length} 个机位${onlineAngles ? ` · ${onlineAngles} 个在线` : ''}`,
     meta: '校园赛事', cover: item.title === campusMatch.title ? campusMatch.cover : undefined }
 }
 export function vodCard(item: VodItem): MediaCard {

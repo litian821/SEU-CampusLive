@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getAlbums, getLiveStreams, getVodItems } from '../api'
+import { getAlbums, getLiveMatches, getVodItems } from '../api'
 import { useCatalog } from '../composables/useCatalog'
 import { campusMatch, liveCard, vodCard } from '../domain/media'
 import CampusMark from '../components/CampusMark.vue'
@@ -8,7 +8,7 @@ import FeedbackState from '../components/FeedbackState.vue'
 import LiveBadge from '../components/LiveBadge.vue'
 import MediaCard from '../components/MediaCard.vue'
 import MediaCover from '../components/MediaCover.vue'
-const live = useCatalog(getLiveStreams, 10000)
+const live = useCatalog(getLiveMatches, 10000)
 const vod = useCatalog(getVodItems)
 const albums = useCatalog(getAlbums)
 const featured = computed(() => live.data.value?.find(item => item.status === 'live') || live.data.value?.[0])

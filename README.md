@@ -7,8 +7,8 @@ Campus Live 面向东南大学学生，提供校园赛事直播、比赛回放�
 ## 当前能力
 
 - 首页：展示当前直播、赛事入口和精彩内容。
-- 赛事直播：查看正在直播或等待开播的校园比赛。
-- 直播播放：支持 HLS 播放、断流重试和手动重新连接。
+- 赛事直播：支持多场比赛同时开播，每场比赛可配置多个手机机位。
+- 直播播放：支持机位切换、HLS 播放、断流重试和手动重新连接。
 - 点播库：浏览历史比赛视频。
 - 点播播放：支持播放、暂停、拖动进度和 Range 请求。
 - 赛场瞬间：按比赛浏览照片，支持放大和键盘切换。
@@ -32,7 +32,7 @@ Campus Live 面向东南大学学生，提供校园赛事直播、比赛回放�
 ## 技术架构
 
 ```text
-OBS
+OBS / iPhone（每台设备使用唯一流名）
  │
  │ RTMP
  ▼
@@ -294,6 +294,8 @@ npm run build
 GET /api/health
 GET /api/live
 GET /api/live/{stream_id}
+GET /api/matches
+GET /api/matches/{match_id}
 GET /api/vod
 GET /api/vod/detail?filename=<filename>
 GET /api/photos
@@ -331,7 +333,7 @@ make test
 
 - 暂无用户登录系统。
 - 暂无后台上传管理。
-- 暂无赛事持久化数据库。
+- 赛事和机位通过 `LIVE_MATCHES_JSON` 配置，暂无持久化数据库与后台管理。
 - 暂无比分和赛程管理。
 - 暂无推流鉴权。
 - 暂无公网 HTTPS、域名和长期监控。

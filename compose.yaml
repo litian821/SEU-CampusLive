@@ -18,6 +18,7 @@ services:
       LIVE_SPORT: ${LIVE_SPORT:-篮球}
       LIVE_VENUE: ${LIVE_VENUE:-东南大学}
       LIVE_STREAM_KEY: ${LIVE_STREAM_KEY:-demo}
+      LIVE_MATCHES_JSON: ${LIVE_MATCHES_JSON:-}
       VOD_DIR: ${VOD_DIR:-/data/vod}
       PHOTO_DIR: /data/photos
     volumes:

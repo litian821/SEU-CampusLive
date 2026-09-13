@@ -25,7 +25,7 @@ vi.mock('hls.js', () => ({ default: class {
 beforeEach(() => { state.instances.length = 0; state.supported = true })
 
 async function routing(path: string) {
-  const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/:pathMatch(.*)*', component: { template: '<div />' } }, { path: '/vod/:id', component: WatchPage }] })
+  const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/:pathMatch(.*)*', component: { template: '<div />' } }, { path: '/live/:id', component: WatchPage }, { path: '/vod/:id', component: WatchPage }] })
   await router.push(path)
   await router.isReady()
   return router
@@ -87,6 +87,22 @@ describe('live recovery', () => {
     wrapper.unmount()
     expect(video.getAttribute('src')).toBeNull()
   })
+})
+it('selects a live angle and lets the viewer switch cameras', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) => ({ ok: true, json: async () => url === '/api/vod' ? [] : {
+    id: 'faculty-cup', title: '院系杯决赛', sport: '篮球', venue: '九龙湖体育馆', status: 'live',
+    angles: [
+      { id: 'main', name: '主机位', status: 'live', playback_url: '/media/live/main.m3u8' },
+      { id: 'hoop', name: '篮下机位', status: 'live', playback_url: '/media/live/hoop.m3u8' },
+    ],
+  } })))
+  const wrapper = mount(WatchPage, { props: { kind: 'live' }, global: { plugins: [await routing('/live/faculty-cup')] } })
+  await flushPromises()
+  expect(wrapper.text()).toContain('2 个机位 · 2 个在线')
+  expect(wrapper.getComponent(HlsVideo).props('src')).toBe('/media/live/main.m3u8')
+  await wrapper.findAll('.angle-button')[1].trigger('click')
+  expect(wrapper.getComponent(HlsVideo).props('src')).toBe('/media/live/hoop.m3u8')
+  expect(wrapper.findAll('.angle-button')[1].attributes('aria-pressed')).toBe('true')
 })
 it.each(['决赛 100%.mp4', 'literal%20name.mp4'])('does not double-decode %s', async filename => {
   const mock = vi.fn().mockImplementation(async (url: string) => ({ ok: true, json: async () => url === '/api/vod' ? [] : { id: filename, title: '决赛', filename, size_bytes: 1024, playback_url: '/media/vod/' + encodeURIComponent(filename) } }))

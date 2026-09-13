@@ -38,6 +38,44 @@
 
 推流后等待 5-10 秒，SRS 生成足够 HLS 分片后网页会开始播放。
 
+## 多设备与多机位
+
+每台推流设备必须使用唯一流名。同一场比赛的三台手机可以分别使用：
+
+```text
+主机位：faculty-main
+篮下机位：faculty-hoop
+全景机位：faculty-wide
+```
+
+在服务器 `.env` 中将这些流归入同一场比赛。JSON 必须写在一行：
+
+```text
+LIVE_MATCHES_JSON=[{"id":"faculty-cup","title":"院系杯决赛","sport":"篮球","venue":"九龙湖体育馆","angles":[{"stream_id":"faculty-main","name":"主机位"},{"stream_id":"faculty-hoop","name":"篮下机位"},{"stream_id":"faculty-wide","name":"全景机位"}]}]
+```
+
+修改后重建 API：
+
+```bash
+docker compose up -d --build api gateway
+```
+
+三台 iPhone 的 Moblin 串流 URL 分别填写完整地址：
+
+```text
+rtmp://<server-ip>:1935/live/faculty-main
+rtmp://<server-ip>:1935/live/faculty-hoop
+rtmp://<server-ip>:1935/live/faculty-wide
+```
+
+观众统一进入：
+
+```text
+http://<server-ip>/live/faculty-cup
+```
+
+网页会显示每个机位的状态，并自动选中第一个在线机位。观众切换按钮时才会连接对应 HLS，因此一个观众始终只占用一路下行带宽。要同时直播另一场比赛，在 `LIVE_MATCHES_JSON` 数组中再加入一个比赛对象，并为它使用一组新的流名。
+
 ## iPhone 使用 Larix 横屏直推
 
 在 Larix 的 `Settings → Capture and encoding → Video` 中使用以下设置：
@@ -124,5 +162,6 @@ OBS 无法连接：
 - `LIVE_TITLE`：页面显示的比赛名。
 - `LIVE_SPORT`：体育项目。
 - `LIVE_VENUE`：场地。
+- `LIVE_MATCHES_JSON`：可选的多比赛、多机位配置；设置后取代上述单频道元数据作为比赛目录。
 
-RTMP 应用固定为 `live`。其他合法流名推流后也会自动进入直播列表。直播状态来自 SRS；接口查询失败时显示未知状态，不伪装为停播。
+RTMP 应用固定为 `live`。比赛 ID 和流名只允许字母、数字、下划线和连字符；所有流名在全部比赛中必须唯一。其他合法流名推流后也会自动进入直播列表。直播状态来自 SRS；接口查询失败时显示未知状态，不伪装为停播。
