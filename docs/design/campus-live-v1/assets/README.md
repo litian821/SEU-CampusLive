@@ -1,9 +1,17 @@
 # 当前照片素材
 
-`seu-basketball-graded.png` 由用户提供的真实篮球照片经内置 image_gen 编辑模式处理：提亮人物、中间调和暗部，压住高光，加入克制的松青阴影与暖色肤调。属于 AI 辅助调色版本，不应作为未经处理的新闻原图。原始 JPEG 保存在 Git 忽略的 `storage/photos/`，相册展示原图。旧 AI 生成配图已停用。
+`seu-basketball-graded.png` 来自用户提供的东南大学篮球比赛实拍照片，并经过内置图像编辑能力做了克制调色处理：提亮人物、中间调和暗部，压住灯光高光，保留自然肤色，在暗部加入轻微松青倾向，在高光保留暖色氛围。
 
-完整编辑 prompt：
+该图片是产品封面用的 AI 辅助调色版本，不应当作为未经处理的新闻原图。原始 JPEG 保存在 Git 忽略的 `storage/photos/` 中，赛场瞬间相册展示原图。旧 AI 生成篮球示意图已经停用。
 
-```text
-Use case: lighting-weather. Edit target: the user's attached real photograph of a Southeast University basketball game (black/red and blue uniforms under an outdoor roof, black jersey number 5 on the right). Perform restrained professional photographic exposure and color grading ONLY. Lift the underexposed players and midtones by roughly 1.2 stops, retain controlled bright lamps and roof highlights, lightly reduce shadow noise, maintain natural skin tones, subtly cool deep shadows toward forest green while warming highlights gently. This is for Campus Live with forest green #184B3B and warm gold #E8CD72 brand accents, but do NOT recolor uniforms. Preserve exactly all existing people's identities, faces, bodies, gestures, positions, ball/hoop, roof, jersey numbers, existing Chinese lettering, and photographic composition. Keep the original landscape 3:2 framing; no new objects, no removal, no added text or logo, no illustration, no beauty retouching. This must remain recognizably the same documentary photo, brighter and clearer, with tasteful natural contrast rather than heavy cinematic tint. Preserve the darker empty upper-left roof region for later website text overlay.
-```
+## 编辑要求摘要
+
+- 只做曝光和色彩调整，不改人物身份、姿态、服装、球框、屋顶和画面构图。
+- 不添加文字、Logo、物体或插画效果。
+- 保持原照片的纪实感，避免重度电影感滤镜。
+- 适配 Campus Live 的松青 `#184B3B` 与暖金 `#E8CD72` 视觉体系。
+- 保留画面左上方较暗区域，方便网页 Hero 区域叠加文字。
+
+## 原始编辑提示词中文说明
+
+用途是为 Campus Live 网站处理用户提供的真实篮球照片。目标是做专业、克制的曝光和色彩校正：整体提亮欠曝的人物与中间调，控制灯光和屋顶高光，适度降低暗部噪点，保留自然肤色，暗部轻微偏松青，高光略暖。不能改变球员、脸部、身体、动作、站位、篮筐、屋顶、球衣号码和中文文字，也不能添加或删除任何对象。最终效果应当仍然是同一张纪实照片，只是更清晰、更适合网站使用。

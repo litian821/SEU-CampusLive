@@ -1,6 +1,6 @@
 # Campus Live V1 · 东大主场
 
-状态：设计评审稿，等待用户确认。这里是可浏览的高保真静态方案，不是已实现的 Vue 客户端；不请求生产接口、不更改当前服务。2026-09-13。
+状态：设计稿已用于正式 Vue 客户端实现。这里保留可浏览的高保真静态方案，便于回顾产品结构、视觉方向和东南大学元素来源；静态稿不请求生产接口，也不更改当前服务。2026-09-13。
 
 ## 1. 产品结构与信息架构
 
@@ -37,7 +37,7 @@
 | 九龙湖体育馆、桃园田径场 | [体育系联系方式](https://tyx.seu.edu.cn/2160/list.htm)、[校园入学指南](https://physics.seu.edu.cn/2022/1005/c23177a422325/pagem.htm) | 示例场馆文案；正式显示依赖赛事实际场地数据 |
 | 计算机、信息、土木、建筑、经管等学院 | [学校院系设置](https://www.seu.edu.cn/2023/list.htm) | 示例对阵采用院系语境；比赛、对阵、日期与时长均属设计虚构，不声称活动实际存在 |
 
-不直接嵌入学校标准校徽，也不将原创建筑线稿称为校徽。预览用照片为 AI 生成的普通大学篮球比赛示意，明确不是东大场馆实拍。未来真实封面应由团队提供或来自可使用的赛事资料。
+不直接嵌入学校标准校徽，也不将原创建筑线稿称为校徽。早期预览曾使用 AI 生成篮球示意图，现已替换为用户提供的东南大学篮球实拍照片调色版本；真实照片的使用和授权由团队负责确认。
 
 ## 4. 首页布局
 
@@ -66,7 +66,7 @@ Desktop 1440：页面左右各 48 px，中央内容宽 1344 px 内；常规内�
 
 详情：播放器仍然最大，侧边放最多两条“接着看”；下方是完整标题、发布日期、场地、简介与相关推荐。播放使用真实 video 能力，不在 MVP 伪造不存在的清晰度切换、字幕或下载功能。
 
-## 7. Design Tokens
+## 7. 设计变量
 
 | Token | 值 | 用途 |
 | --- | --- | --- |
@@ -118,7 +118,7 @@ Desktop 1440：页面左右各 48 px，中央内容宽 1344 px 内；常规内�
 
 ## 10. 与现有 API 的落地边界
 
-现有前端是 React；本轮只新增设计材料。确认后迁移到 Vue 3 + Vite + TypeScript + Vue Router + hls.js，不修改 FastAPI/SRS/Nginx 的接口语义。
+正式前端已经迁移到 Vue 3 + Vite + TypeScript + Vue Router + hls.js，并保持 FastAPI、SRS 和 Nginx 的接口语义稳定。静态设计稿只作为视觉和结构对照，不代表当前运行客户端。
 
 | 展示字段 | 当前来源 | 正式版本策略 |
 | --- | --- | --- |
@@ -131,33 +131,29 @@ Desktop 1440：页面左右各 48 px，中央内容宽 1344 px 内；常规内�
 
 没有编辑信息时依然交付完整、诚实且美观的界面。需要添加来源时使用可选配置而不是随意扩改后端。
 
-## 11. Vue 实施计划（确认后执行）
+## 11. Vue 实施结果与后续整理
+
+当前正式客户端位于 `apps/web/src/`，已包含：
 
 ```text
-apps/web/src/
-  app/             # App.vue, router, 全局样式入口
-  api/             # 原有接口契约、fetch、超时和错误
-  domain/          # DTO、ViewModel、数据适配与筛选
-  content/         # 按真实 ID 映射的可选编辑资料，示例隔离
-  composables/     # useLiveCatalog, useVodCatalog, useHlsPlayer
-  components/
-    layout/        # Header, Footer, PageContainer
-    media/         # Cover, VideoCard, Players
-    events/        # FeaturedLive, MatchRow, LiveBadge
-    feedback/      # Loading, Empty, Error
-  pages/           # 五个核心页面 + NotFound
-  styles/          # tokens.css, base.css, utilities.css
+App.vue              # 全局布局、导航和页面框架
+router.ts            # 首页、直播、点播、赛场瞬间和 404 路由
+api.ts               # API 类型和请求封装
+components/          # 播放器、媒体卡片、状态、封面和品牌组件
+composables/         # 直播/点播目录请求与刷新逻辑
+pages/               # 首页、列表页、播放页、照片页和错误页
+styles/              # 设计变量与全站样式
 ```
 
-不采用 Element Plus，不引入庞大的后台 UI 套件；使用少量自研组件、语义 HTML 和共享 CSS Tokens。Vue Router 懒加载播放页；不因迁移丢掉重连、取消请求、卸载清理和特殊文件名处理。完善 ESLint + Vue 插件、vue-tsc、Vitest + Vue Test Utils、Playwright。
+正式实现没有采用后台 UI 套件，而是使用自研组件、语义 HTML、共享设计变量和 Vue Router 懒加载。HLS 播放、断流重连、点播特殊文件名、取消请求和卸载清理均保留对应测试。
 
-按「基础设计系统 → 列表与首页 → 播放页 → 响应式与无障碍 → 真实 API 联调」交付；运行 lint、typecheck、build、单元测试、浏览器测试，复验 RTMP→HLS 和点播 Range/暂停/拖动。全部通过后提交代码，保持当前可运行版本可回退。
+后续整理重点是把赛事编辑信息、封面、赛程、比分和上传管理逐步数据化，避免继续靠前端静态映射扩展内容。
 
-## 12. 当前评审物与下一步
+## 12. 当前静态稿用途
 
 打开 `index.html` 可查看五个页面、设计系统和空/错误状态；设计底部工具栏用于切换。素材和文件均本地化，无外部图片依赖。设计确认重点是：暖白+松青+暖金方向、东大元素的克制程度、首页重点直播与右侧速览的比例、播放器与信息的主次关系。
 
-按用户要求，本阶段等待设计确认；尚未修改 `apps/web`，也尚未进行 Vue 迁移。
+正式 Vue 客户端已经实现并部署；本静态稿继续作为设计对照和视觉规范来源。后续如果调整品牌方向，应同步修改正式客户端样式、设计文档和验收记录。
 
 参考产品结构：[Red Bull 官方直播栏目](https://www.redbull.com/int-en/live-events/)的直播/回看分流，以及 [Olympic Channel 官方介绍](https://support.olympics.com/hc/en-gb/articles/1500009814861-What-is-Olympic-Channel)的体育项目发现思路。只借鉴组织方式，不复制品牌、界面或内容。
 

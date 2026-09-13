@@ -1,34 +1,54 @@
-# MVP 可靠性完善（2026-09-13）
+# MVP 可靠性完善记录
 
-## 决策与依据
+## 当前技术路线
 
-选择适合本项目的简单方案，并不把“最好”理解为堆叠最多组件。继续采用 React + TypeScript、FastAPI、SRS 6 和 Nginx，同源 HTTP 入口、RTMP 入流、HLS 直播和静态文件点播。
+项目继续坚持简单稳定的单机 Docker Compose 方案。当前正式客户端已迁移为 Vue 3 + TypeScript + Vite + Vue Router + hls.js；后端使用 FastAPI；媒体服务使用 SRS 6；统一入口使用 Nginx。
 
-1. [SRS 6 HTTP API](https://ossrs.io/lts/en-us/docs/v6/doc/http-api)：业务 API 查询内部 `/api/v1/streams/`，验证 HTTP 错误、业务 code 和响应结构，区分 live/offline/unknown。默认频道始终可进入，其他活跃流自动发现；仅支持 `live` 应用和由字母、数字、下划线、连字符组成的流名。查询超时为 2 秒，前端每次查询完成 10 秒后更新，适合小规模单机 MVP。更大并发时再加共享缓存或事件状态存储。
-2. [hls.js 官方 API](https://github.com/video-dev/hls.js/blob/master/docs/API.md)：遇到致命媒体错误先有限恢复，其余致命错误按 5/10/20/30 秒重建连接；卸载时销毁实例、定时器和媒体资源。保留原生 HLS 分支。页面提供手动重试，浏览器仍需要用户点击播放，不强行绕过自动播放策略。
-3. [Nginx 文件服务](https://nginx.org/en/docs/http/ngx_http_core_module.html)：视频字节由 Nginx 提供，保留 Range；API 只处理元数据，隐藏临时、空文件和符号链接，Nginx 同时拒绝符号链接读取。目录扫描仍不等于编码校验，管理员应提供浏览器支持的 H.264/AAC MP4。
-4. [Docker daemon 代理](https://docs.docker.com/engine/daemon/proxy/)：宿主代理属于机器环境，不写进镜像或 Compose。内部 SRS 请求明确不继承代理。SRS 管理端口只绑定回环地址，四个服务都有健康检查和有限日志保留。
+这不是堆技术的项目。MVP 目标是让团队能快速 clone、启动、推流、观看、测试和交付。
 
-## 已解决的具体问题
+## 已完成的关键改进
 
-- 停播频道被固定显示为 LIVE；现在显示真实状态，SRS 异常显示“状态暂不可用”。
-- HLS 初次 404 或断流后停在错误提示；现在持续退避重连并可手动连接。
-- 点播 URL 二次解码破坏 `%` 文件名；现在使用路由解码后的 ID 请求 API 详情。
-- 点播文件删除后仍显示空播放器；现在先确认详情，播放阶段另提供失败提示。
-- Web 原来的 `check` 只有构建，没有单元测试；现在引入 Vitest 和 React Testing Library。
-- 测试命令可能使用旧镜像；现在测试容器显式使用 `--build`。
+1. 直播状态不再写死为 LIVE。API 会查询 SRS 的流状态，区分 `live`、`offline` 和 `unknown`。
+2. 默认频道始终可进入，未开播时页面给出等待状态；额外合法流名推流后可自动出现在直播列表。
+3. HLS 首次 404、断流或短暂网络失败时，前端会退避重连，并提供手动重试。
+4. Edge 等支持 MSE 的浏览器优先使用 hls.js，避免部分浏览器原生 HLS 解析失败。
+5. 点播详情使用查询参数处理文件名，修复含 `%`、中文和特殊字符文件名的重复解码问题。
+6. 点播文件由 Nginx 提供，保留 Range 请求，支持播放、暂停和拖动。
+7. API 和 Nginx 过滤临时文件、空文件、隐藏文件和符号链接，减少误发布风险。
+8. 新增“赛场瞬间”，照片按比赛相册存放，支持放大、方向键切换和 Escape 关闭。
+9. Nginx 使用 Docker 内置 DNS 动态解析上游，避免 API/Web 容器重建后网关仍连旧 IP。
+10. Docker 测试任务显式重建测试镜像，避免误用旧代码。
+11. 云服务器部署时前端 Dockerfile 配置 npm 镜像源，减少国内云服务器首次构建卡住的概率。
+12. 新增交接文档，区分开发电脑、本地环境、云服务器和课堂交付职责。
 
-## 下一阶段
+## 已验证内容
 
-1. 单管理员身份验证、SQLite 赛事元数据和受保护的视频上传，形成赛事管理闭环。上传使用 [FastAPI UploadFile](https://fastapi.tiangolo.com/tutorial/request-files/) 或流式写入并限制请求大小，避免将大视频一次性读入内存；未完成前不提供匿名上传入口。
-2. SRS 发布回调校验推流凭据，增加真实赛事频道管理。当前流名是公开播放标识，不是秘密，也不提供鉴权。
-3. 实际录制需求明确后加入录制转点播和后台转码任务，验证失败重试、磁盘容量和发布原子性。
-4. 有明确延迟目标再比较 WebRTC/HTTP-FLV；有校外部署需求再配置 HTTPS、身份权限和监控。
+截至 2026-09-13，已验证：
 
-上述为后续规划，不代表已经实现。当前版本仍以可信局域网演示为边界。
+- 本地环境检查、Compose 配置检查和服务健康检查。
+- API 单元测试。
+- Web lint、类型检查、单元测试和生产构建。
+- HTTP 冒烟测试。
+- 点播文件详情、Range 206、中文和特殊文件名。
+- FFmpeg 模拟 RTMP 推流、SRS 直播发现、HLS 播放列表、HLS 分片和音视频解码。
+- 停止推流后直播目录恢复为未开播。
+- 云服务器公网网站、API 和 HLS 观看链路。
+- 云服务器 `1935/tcp` 放行后公网 RTMP 端口可达。
 
-## 浏览器实测修复
+## 仍需完成
 
-Windows Edge 声称支持原生 HLS，但本机实播出现 `PipelineStatus::DEMUXER_ERROR_COULD_NOT_PARSE`，表现为缓冲已就绪而播放时间停在 0。按 [hls.js 官方嵌入顺序](https://github.com/video-dev/hls.js#embedding-hlsjs)，MSE 可用时优先使用 hls.js，只在不支持 MSE 时选择原生 HLS。增加对应回归测试；原生 Safari 分支仍需 Safari 实机验收。
+- 使用 OBS 播放真实篮球视频源进行完整公网直播测试。
+- 进行 3-5 台设备同时观看测试。
+- 更换默认推流密钥 `demo`。
+- 配置域名和 HTTPS。
+- 准备课堂用真实点播视频、比赛照片和备用素材。
+- 如果需要长期运行，增加基础监控、备份和磁盘清理策略。
 
-容器重建还复现了 Nginx 缓存旧上游 IP 导致的 502：网关进程健康并不代表业务链路正常。使用 Docker 内置 DNS `127.0.0.11` 和 [Nginx upstream resolve](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server) 动态解析，避免每次更新 API/Web 都需要重启网关。当前 Nginx 1.28 支持该开源功能。
+## 后续规划
+
+1. 增加 SQLite 赛事元数据，保存标题、学院、场馆、封面、发布时间和分类。
+2. 增加受保护的管理入口，用于上传点播视频和照片。
+3. 接入 SRS 发布回调或鉴权逻辑，避免任何人猜到流名后推流。
+4. 明确录制需求后再加入直播录制、转码和自动发布点播。
+5. 如果课堂或校园真实使用要求更低延迟，再评估 WebRTC 或 HTTP-FLV。
+6. 如果观众规模扩大，再评估 CDN、对象存储和媒体服务器拆分。

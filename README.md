@@ -4,16 +4,17 @@
 
 Campus Live 面向东南大学学生，提供校园赛事直播、比赛回放和赛场照片浏览功能。平台支持 OBS 通过 RTMP 推流，服务端使用 SRS 转换为 HLS，Web 客户端负责直播观看、点播播放和赛场内容浏览。
 
-## 功能
+## 当前能力
 
-- 首页：展示当前直播、赛事入口和精彩内容
-- 赛事直播：查看正在直播的校园比赛
-- 直播播放：支持 HLS 播放、断流重试和重新连接
-- 点播库：浏览历史比赛视频
-- 点播播放：支持播放、暂停、拖动进度和 Range 请求
-- 赛场瞬间：按比赛浏览照片，支持放大和键盘切换
-- 响应式页面：支持桌面端、笔记本和移动端
-- 东南大学校园视觉：松青、暖金、大礼堂线稿和“止于至善”品牌语境
+- 首页：展示当前直播、赛事入口和精彩内容。
+- 赛事直播：查看正在直播或等待开播的校园比赛。
+- 直播播放：支持 HLS 播放、断流重试和手动重新连接。
+- 点播库：浏览历史比赛视频。
+- 点播播放：支持播放、暂停、拖动进度和 Range 请求。
+- 赛场瞬间：按比赛浏览照片，支持放大和键盘切换。
+- 响应式页面：支持桌面端、笔记本和基础移动端。
+- 东南大学校园视觉：松青、暖金、大礼堂线稿和“止于至善”品牌语境。
+- 云服务器部署：已支持单台服务器小规模公网展示和 RTMP 推流。
 
 ## 当前示例赛事
 
@@ -43,7 +44,8 @@ Nginx Gateway
  ├── Vue 3 Web Client
  ├── FastAPI API
  ├── HLS Live Stream
- └── MP4/WebM VOD
+ ├── MP4/WebM VOD
+ └── Photo Albums
 ```
 
 主要技术：
@@ -86,9 +88,10 @@ campus-sports-platform/
 ├── docs/
 │   ├── architecture.md       # 系统架构
 │   ├── development.md        # 开发环境
-│   ├── streaming.md           # OBS 推流说明
+│   ├── streaming.md          # OBS 推流说明
 │   ├── testing.md            # 测试说明
-│   └── client-gallery.md     # Vue 客户端与赛场瞬间
+│   ├── client-gallery.md     # Vue 客户端与赛场瞬间
+│   └── operations-handoff.md # 团队交接与云服务器部署
 ├── compose.yaml
 ├── .env.example
 ├── AGENTS.md
@@ -102,16 +105,14 @@ campus-sports-platform/
 - Docker Desktop 或 WSL 原生 Docker Engine
 - Docker Compose
 - Git
-- OBS Studio（仅直播推流时需要）
+- OBS Studio（直播推流时需要）
 
-## 快速启动
+## 本地快速启动
 
 ```bash
 git clone git@github.com:litian821/SEU-CampusLive.git campus-sports-platform
 cd campus-sports-platform
-
 cp .env.example .env
-
 docker compose up --build --wait --wait-timeout 120
 docker compose ps
 ```
@@ -134,24 +135,79 @@ http://127.0.0.1:8080/api/health
 docker compose down
 ```
 
+## 云服务器部署
+
+云服务器部署建议使用 `/opt/campus-live` 作为运行目录：
+
+```bash
+cd /opt
+git clone https://github.com/litian821/SEU-CampusLive.git campus-live
+cd campus-live
+cp .env.example .env
+```
+
+生产展示时建议在 `.env` 中设置：
+
+```text
+APP_ENV=production
+WEB_PORT=80
+RTMP_PORT=1935
+LIVE_STREAM_KEY=demo
+```
+
+启动：
+
+```bash
+docker compose up --build -d --wait --wait-timeout 180
+docker compose ps
+curl http://127.0.0.1/api/health
+```
+
+云服务器安全组需要开放：
+
+```text
+80/tcp    网站访问
+1935/tcp  OBS RTMP 推流
+22/tcp    SSH 管理
+443/tcp   后续 HTTPS 使用
+```
+
+不要把 SRS 管理端口 `1985` 暴露到公网。
+
 ## OBS 直播
 
-在 OBS Studio 中打开“设置 → 直播”，选择：
+本地开发推流：
 
 ```text
 服务：自定义
 服务器：rtmp://127.0.0.1:1935/live
 串流密钥：demo
+观看地址：http://127.0.0.1:8080/live/demo
 ```
 
-然后：
+云服务器推流：
 
-1. 在 OBS 的“来源”中添加摄像头、显示器或媒体源。
-2. 点击“开始直播”。
-3. 打开 `http://127.0.0.1:8080/live/demo`。
-4. 等待几秒，网页会显示直播画面。
+```text
+服务：自定义
+服务器：rtmp://<server-ip>:1935/live
+串流密钥：demo
+观看地址：http://<server-ip>/live/demo
+```
 
-结束直播时，在 OBS 中点击“停止直播”。
+服务器地址只写到 `/live`，不要写成 `/live/demo`；`demo` 单独填在串流密钥中。
+
+课堂展示建议在 OBS 中添加“媒体源”，选择一段篮球比赛视频并勾选循环，不建议只用电脑摄像头。
+
+推荐输出：
+
+```text
+分辨率：1280x720
+帧率：30 FPS
+视频码率：2500-3500 kbps
+关键帧间隔：2 秒
+视频编码：H.264
+音频编码：AAC
+```
 
 ## 点播
 
@@ -161,17 +217,15 @@ docker compose down
 storage/vod/
 ```
 
-支持的格式：`.mp4`、`.webm`、`.mov`、`.m4v`。
+支持 `.mp4`、`.webm`、`.mov`、`.m4v`。为了浏览器兼容性，优先使用 H.264 + AAC 的 MP4。
 
-推荐使用临时文件导入：
+复制大文件时建议先使用 `.part` 临时后缀，复制完成后再改名为正式扩展名，避免客户端读取未写完的视频。
+
+点播页面：
 
 ```text
-比赛录像.mp4.part
+http://127.0.0.1:8080/vod
 ```
-
-文件写入完成后，再改名为正式扩展名，避免客户端读取未完成的视频。
-
-点播页面：`http://127.0.0.1:8080/vod`
 
 ## 赛场瞬间
 
@@ -185,23 +239,17 @@ storage/photos/<比赛名称>/
 
 ```bash
 python3 scripts/import-photos.py \
-	--album "院系杯 · 网络空间安全学院 vs 电子科学与工程学院" \
-	/path/to/photo.jpg
+  --album "院系杯 · 网络空间安全学院 vs 电子科学与工程学院" \
+  /path/to/photo.jpg
 ```
 
-支持：
+支持 JPEG、PNG、WebP，单张最大 25 MB。同名文件会拒绝覆盖。照片和视频不会提交到 Git。
 
-- JPEG、PNG、WebP
-- 单张最大 25 MB
-- 同名文件拒绝覆盖
-- 照片按比赛相册浏览
-- 点击放大
-- Escape 关闭
-- 方向键切换
+照片页面：
 
-照片页面：`http://127.0.0.1:8080/moments`
-
-照片和视频不会提交到 Git。
+```text
+http://127.0.0.1:8080/moments
+```
 
 ## 常用测试
 
@@ -225,7 +273,11 @@ npm ci
 npm run dev
 ```
 
-前端开发地址：`http://127.0.0.1:5173`
+前端开发地址：
+
+```text
+http://127.0.0.1:5173
+```
 
 常用检查：
 
@@ -257,7 +309,7 @@ codex/fix-<topic>
 codex/docs-<topic>
 ```
 
-Commit 规范：
+Commit 示例：
 
 ```text
 feat: add photo moments gallery
@@ -272,33 +324,29 @@ chore: update dependencies
 
 ```bash
 git status
-
 make test
 ```
 
 ## 当前限制
 
-- 暂无用户登录系统
-- 暂无后台上传管理
-- 暂无赛事持久化数据库
-- 暂无比分和赛程管理
-- 暂无推流鉴权
-- 当前适合校园局域网和开发环境
-- OBS 推流需要本机运行 Docker 和 SRS
+- 暂无用户登录系统。
+- 暂无后台上传管理。
+- 暂无赛事持久化数据库。
+- 暂无比分和赛程管理。
+- 暂无推流鉴权。
+- 暂无公网 HTTPS、域名和长期监控。
+- 当前适合本地开发和单台云服务器小规模课程展示。
+- 课堂交付前仍需完成 OBS 真实视频源推流和多设备观看测试。
 
-## 设计文档
+## 文档入口
 
-完整的产品设计、视觉规范、东南大学元素使用说明和 Vue 页面结构见：
-
-```text
-docs/design/campus-live-v1/DESIGN.md
-```
-
-## 团队交接
-
-电脑本地开发、云服务器部署、OBS 非摄像头直播测试和课堂交付检查见：
-
-- docs/operations-handoff.md
+- `AGENTS.md`：长期工程规范。
+- `docs/architecture.md`：系统架构和当前取舍。
+- `docs/streaming.md`：OBS、RTMP、HLS、点播说明。
+- `docs/testing.md`：本地、云端和媒体链路验收。
+- `docs/client-gallery.md`：Vue 客户端与赛场瞬间。
+- `docs/operations-handoff.md`：开发电脑、云服务器和课堂交付交接。
+- `docs/design/campus-live-v1/DESIGN.md`：产品设计、视觉规范和东南大学元素说明。
 
 ## 许可证
 

@@ -2,52 +2,97 @@
 
 ## 自动检查
 
+项目根目录常用命令：
+
 ```bash
 make check
 make config
 make test-api
 make test-web
+make test
 ```
 
-`make test` 汇总 API 测试、Web 类型/单元测试和 Compose 配置验证。
+`make test` 汇总 API 测试、Web 类型/单元测试和 Compose 配置验证。修改 Docker 或部署配置后至少运行 `make config`；修改直播或点播链路后还要运行媒体链路测试。
 
-## 直播验收
+## 本地直播验收
 
-1. `docker compose up --build -d` 后所有服务健康。
-2. OBS 向 `rtmp://localhost:1935/live`、密钥 `demo` 推流。
-3. `/live` 显示直播项目，`/live/demo` 可播放且停止推流后给出可理解的错误状态。
-4. 检查 HLS 播放列表和分片没有进入 Git。
+1. 执行 `docker compose up --build -d`。
+2. 确认 `docker compose ps` 中 `api`、`web`、`media`、`gateway` 均为 healthy。
+3. OBS 服务器填写 `rtmp://127.0.0.1:1935/live`，串流密钥填写 `demo`。
+4. 打开 `http://127.0.0.1:8080/live/demo`。
+5. 页面应在几秒后播放直播；停止推流后应显示可理解的等待或错误状态。
+6. 检查 HLS 分片没有进入 Git。
+
+## 云服务器直播验收
+
+1. 云服务器安全组开放 `80/tcp` 和 `1935/tcp`。
+2. 云服务器执行 `docker compose up --build -d --wait --wait-timeout 180`。
+3. 浏览器打开 `http://<server-ip>/`，确认首页可访问。
+4. OBS 服务器填写 `rtmp://<server-ip>:1935/live`，串流密钥填写 `demo`。
+5. 打开 `http://<server-ip>/live/demo`，等待 HLS 分片生成后确认画面播放。
+6. 用至少 3-5 台设备同时观看，观察卡顿、延迟和服务器资源。
 
 ## 点播验收
 
 1. 把一个 H.264/AAC MP4 放入 `storage/vod/`。
 2. `/vod` 能显示文件，点入详情后能播放、暂停和拖动。
-3. 执行 `curl -I -H 'Range: bytes=0-1023' http://localhost:8080/media/vod/<file>`，响应应为 `206`。
-4. `git status --short` 不显示媒体文件和运行数据。
+3. 执行 Range 请求检查，响应应为 `206`：
 
-## 回归检查
+```bash
+curl -I -H 'Range: bytes=0-1023' http://127.0.0.1:8080/media/vod/<file>
+```
 
-- `make test` 会重新构建测试镜像，包含 API 单元测试、Vitest Vue 3 组件测试、类型检查、生产构建与 Compose 配置验证。
-- `docker compose up --build --wait --wait-timeout 120` 等待四个服务健康，再运行 `make smoke`。自定义 Web 端口时执行 `BASE_URL=http://127.0.0.1:<port> make smoke`。
-- GitHub Actions 工作流已配置，但在未连接 GitHub 之前只能在本地执行等价检查，不能声称远程 CI 已通过。
-- 浏览器验收：未开播频道显示“尚未开播”；打开播放页再推流，等待自动重连；停止再恢复推流后重新播放；点播搜索、缺失详情、中文/百分号文件名、播放/暂停/拖动都应可用。
-- 自动播放受浏览器策略约束，播放页需要用户点击播放。单元测试使用媒体接口替身，不能代替真实媒体链路验收。
+4. `git status --short` 不应显示媒体文件和运行数据。
 
-## 可重复的真实媒体链路验收
+## 照片验收
 
-在 WSL/Linux 项目根目录执行 `make test-media`。脚本使用 Compose 中同一 SRS 镜像自带的 FFmpeg 生成 20 秒 H.264/AAC 测试片，验证含百分号的文件名、详情接口、Range 206、RTMP 推流、真实开播状态、HLS 分片与音视频解码，以及停止推流后的目录更新。使用随机频道名和临时容器，退出时只清理本次创建的容器和点播测试文件。HLS 临时文件由 SRS 清理且被 Git 忽略。`KEEP_TEST_VIDEO=1 make test-media` 保留合成测试片供浏览器验收。
+1. 使用 `scripts/import-photos.py` 将照片导入指定相册。
+2. 打开 `/moments`，确认相册、照片列表和放大预览正常。
+3. 验证 Escape 关闭预览，方向键切换照片。
+4. 确认照片原图不提交到 Git。
+
+## 真实媒体链路测试
+
+在 WSL/Linux 项目根目录执行：
+
+```bash
+make test-media
+```
+
+脚本使用 SRS 镜像自带 FFmpeg 生成 20 秒 H.264/AAC 测试片，验证：
+
+- 含百分号和中文的文件名。
+- 点播详情接口。
+- Range `206`。
+- RTMP 推流。
+- SRS 开播状态发现。
+- HLS 播放列表和分片。
+- 音视频解码。
+- 停止推流后的目录状态恢复。
+
+使用 `KEEP_TEST_VIDEO=1 make test-media` 可保留合成测试片供浏览器验收。
 
 ## 浏览器自动检查
 
-先执行 `KEEP_TEST_VIDEO=1 make test-media` 保留合成测试片，再运行：
+先保留合成测试片，再运行浏览器测试：
 
 ```bash
+KEEP_TEST_VIDEO=1 make test-media
 cd tests/browser
 npm ci
 npx playwright install --with-deps chromium
 npm test
 ```
 
-测试真实播放、暂停、拖动及继续播放，缺失视频、未知页面、手机布局和未捕获页面异常。已安装 Microsoft Edge 时可设置 `BROWSER_CHANNEL=msedge`；服务不在默认端口时设置 `BASE_URL`。设置 `LIVE_TEST_ID` 为当前正在推流的测试频道，会额外验证首次 HLS 404 后自动恢复和实际播放进度；不会替你启动或停止 OBS。可设置 `SCREENSHOT_DIR` 为 Git 外的输出目录保存截图。
+可选环境变量：
 
-本轮实际结果与未验证范围见 [2026-09-13 验收记录](validation-2026-09-13.md)。
+- `BROWSER_CHANNEL=msedge`：使用本机 Microsoft Edge。
+- `BASE_URL=http://127.0.0.1:<port>`：服务不在默认端口时指定地址。
+- `LIVE_TEST_ID=<stream-key>`：对当前正在推流的频道增加 HLS 恢复和播放进度检查。
+- `SCREENSHOT_DIR=<path>`：将截图保存到 Git 外目录。
+
+浏览器测试会覆盖点播播放、暂停、拖动、缺失视频、未知页面、手机布局和未捕获页面异常。自动播放受浏览器策略限制，不能把单元测试当成真实直播验收。
+
+## 当前验证记录
+
+截至 2026-09-13，本地和云服务器主要链路已完成验证，具体边界见 [2026-09-13 验收记录](validation-2026-09-13.md)。课堂交付前仍需完成 OBS 真实视频源推流和多设备观看测试。

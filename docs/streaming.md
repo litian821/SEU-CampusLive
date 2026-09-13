@@ -1,33 +1,107 @@
-# 直播与点播
+# 直播与点播说明
 
 ## OBS 推流
 
-1. 启动 Compose 环境。
-2. OBS 打开“设置 > 直播”，服务选择“自定义”。
-3. 服务器填写 `rtmp://localhost:1935/live`。
-4. 串流密钥填写 `demo`。
-5. 输出编码器选择 H.264，音频选择 AAC，关键帧间隔设置为 2 秒。
-6. 开始直播，然后打开 `http://localhost:8080/live/demo`。
+本地开发时：
 
-若 OBS 与服务不在同一台机器，把 `localhost` 换为服务端 IP。Windows 防火墙需要允许 TCP 1935 和 Web 端口 8080。
+```text
+服务：自定义
+服务器：rtmp://127.0.0.1:1935/live
+串流密钥：demo
+观看地址：http://127.0.0.1:8080/live/demo
+```
+
+云服务器展示时：
+
+```text
+服务：自定义
+服务器：rtmp://<server-ip>:1935/live
+串流密钥：demo
+观看地址：http://<server-ip>/live/demo
+```
+
+注意：服务器地址只写到 `/live`，不要写成 `/live/demo`。`demo` 要单独填写在“串流密钥”中。写成 `/live/demo` 后，SRS 会把应用识别为 `live/demo`，实际流路径会变成 `/live/demo/demo`，网页默认频道无法正确识别。
+
+## 推荐 OBS 输出
+
+课堂展示优先使用一段篮球比赛视频作为媒体源，不建议只用电脑摄像头。
+
+```text
+来源：媒体源，选择篮球比赛视频，可勾选循环
+分辨率：1280x720
+帧率：30 FPS
+视频码率：2500-3500 kbps
+关键帧间隔：2 秒
+视频编码：H.264
+音频编码：AAC
+```
+
+推流后等待 5-10 秒，SRS 生成足够 HLS 分片后网页会开始播放。
+
+## 云服务器端口
+
+云服务器安全组和系统防火墙需要允许：
+
+- `80/tcp`：网站访问。
+- `1935/tcp`：OBS RTMP 推流。
+- `443/tcp`：配置 HTTPS 后使用。
+- `22/tcp`：SSH 管理。
+
+SRS 管理端口 `1985` 只供服务器内部使用，不应开放公网。
 
 ## HLS 路径
 
-默认流地址为 `/media/live/<stream-key>.m3u8`。SRS 把分片写入 `storage/live/`，Nginx 从该共享目录直接提供播放列表和分片；这些临时文件被 `.gitignore` 排除。
+默认直播播放地址：
+
+```text
+/media/live/<stream-key>.m3u8
+```
+
+SRS 将 HLS 分片写入 `storage/live/`，Nginx 从共享目录提供播放列表和 `.ts` 分片。这些运行文件已经被 `.gitignore` 排除。
 
 ## 点播文件
 
-把 `.mp4`、`.webm`、`.mov` 或 `.m4v` 文件放入 `storage/vod/`。API 会在请求列表时扫描目录，Nginx 从 `/media/vod/<filename>` 提供文件。为了浏览器兼容性，优先使用 H.264 + AAC 的 MP4。
+将 `.mp4`、`.webm`、`.mov` 或 `.m4v` 文件放入：
+
+```text
+storage/vod/
+```
+
+为了浏览器兼容性，优先使用 H.264 + AAC 的 MP4。复制大文件时建议先使用 `.part` 临时后缀，复制完成后再改名为正式扩展名，避免客户端读取未写完的视频。
 
 ## 常见问题
 
-- 页面显示等待直播：确认 OBS 正在推流，并检查 `docker compose logs media`。
-- OBS 无法连接：确认 1935 端口映射、Docker 服务与 Windows 防火墙。
-- 有画面无声音：确认 OBS 音频编码为 AAC。
-- 点播无法拖动：用浏览器网络面板确认媒体请求返回 `206 Partial Content`。
+页面显示等待直播：
 
-## 频道与等待开播
+- 确认 OBS 已点击“开始直播”。
+- 确认 OBS 服务器地址和串流密钥填写正确。
+- 等待几秒让 HLS 分片生成。
+- 查看 `docker compose logs media`。
 
-`.env` 中 `LIVE_STREAM_KEY` 设置默认频道 ID，`LIVE_TITLE`、`LIVE_SPORT`、`LIVE_VENUE` 设置展示信息。RTMP 应用固定为 `live`；其他合法流名推流后会自动显示在列表。直播状态表示正在推流，HLS 分片就绪仍需几秒；播放器按退避策略重连。SRS 管理端口 1985 默认只供本机访问。
+OBS 无法连接：
 
-`.part` 后缀和隐藏文件不会进入点播目录；先完成复制再改名为 `.mp4`。符号链接和空文件也不发布。
+- 检查云服务器安全组是否开放 `1935/tcp`。
+- 检查服务器是否运行 `docker compose ps`。
+- 确认服务器地址是 `rtmp://<server-ip>:1935/live`。
+- 确认串流密钥与 `.env` 中的 `LIVE_STREAM_KEY` 一致。
+
+有画面无声音：
+
+- 确认 OBS 音频编码为 AAC。
+- 确认 OBS 混音器有音频输入。
+
+点播无法拖动：
+
+- 用浏览器网络面板确认媒体请求返回 `206 Partial Content`。
+- 优先换成 H.264 + AAC 的 MP4。
+
+## 频道与状态
+
+`.env` 中：
+
+- `LIVE_STREAM_KEY`：默认频道 ID。
+- `LIVE_TITLE`：页面显示的比赛名。
+- `LIVE_SPORT`：体育项目。
+- `LIVE_VENUE`：场地。
+
+RTMP 应用固定为 `live`。其他合法流名推流后也会自动进入直播列表。直播状态来自 SRS；接口查询失败时显示未知状态，不伪装为停播。

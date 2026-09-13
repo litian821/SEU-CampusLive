@@ -87,4 +87,4 @@
 - 比赛原图放 `storage/photos/`，禁止提交 Git；小型产品封面放 `apps/web/public/brand/` 并记录来源和处理方式。
 - 相册通过维护脚本导入，拒绝同名覆盖；目录 API 与 Nginx 均过滤隐藏路径、符号链接和非图片内容。
 - UI 的缺失数据不得用虚构赛事、比分、日期或在线人数填充。
-- Vue 使用语义组件、共享 Design Tokens 和类型完整的数据适配；修改后运行 lint、typecheck、单元测试、build 与适用浏览器回归。
+- Vue 使用语义组件、共享 设计变量 和类型完整的数据适配；修改后运行 lint、typecheck、单元测试、build 与适用浏览器回归。

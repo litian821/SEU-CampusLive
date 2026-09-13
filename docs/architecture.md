@@ -2,39 +2,61 @@
 
 ## 目标与边界
 
-MVP 只解决两条核心链路：OBS 推流后可在自研 Web 页面观看；管理员放入视频文件后可在 Web 页面浏览和点播。单机 Docker Compose 是第一阶段的部署边界。
+Campus Live 的 MVP 解决三条核心链路：OBS 推流后可在自研 Web 页面观看直播；管理员放入视频文件后可在 Web 页面浏览和点播；团队将比赛照片放入相册后可在“赛场瞬间”浏览。
+
+当前部署方式仍保持单机 Docker Compose，适合本地开发、云服务器课程展示和小规模校园演示。项目暂不引入 Kubernetes、消息队列、复杂权限系统或分布式媒体集群。
 
 ## 组件
 
 | 组件 | 技术 | 职责 |
 | --- | --- | --- |
-| Web | Vue 3、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
-| API | FastAPI、Python | 健康检查、直播目录、点播文件索引 |
-| Media | SRS 6 | 接收 RTMP，生成 HLS |
-| Gateway | Nginx | 单一 HTTP 入口、页面/API 反向代理、直播和点播文件、Range 请求 |
-| Storage | 主机目录 | 保存点播文件和临时直播分片，不进入 Git |
+| Web | Vue 3、TypeScript、Vite、Vue Router、hls.js | 首页、直播列表、直播播放、点播列表、点播播放、赛场瞬间 |
+| API | FastAPI、Python | 健康检查、直播目录、点播文件索引、照片相册索引 |
+| Media | SRS 6 | 接收 RTMP 推流，生成 HLS 直播文件 |
+| Gateway | Nginx | 单一 HTTP 入口、页面/API 反向代理、直播 HLS、点播 Range、照片静态访问 |
+| Storage | 主机目录 | 保存点播视频、照片和直播临时分片；运行数据不进入 Git |
 
 ## 数据流
 
+本地开发默认端口为 `8080`；云服务器生产部署可通过 `.env` 将 `WEB_PORT` 改为 `80`。
+
 ```text
-OBS (Windows) --RTMP :1935--> SRS --HLS 文件--> Nginx :8080 --> Web 播放器
-storage/vod ---------------------------> Nginx :8080 --> HTML5 播放器
-storage/vod --> FastAPI 索引 --> Nginx /api --> Web 列表
+OBS -> RTMP :1935 -> SRS -> HLS 文件 -> Nginx /media/live -> Web 播放器
+storage/vod -> FastAPI 索引 -> Nginx /api -> Web 点播列表
+storage/vod -> Nginx /media/vod -> HTML5 video 点播播放
+storage/photos -> FastAPI 索引 -> Nginx /media/photos -> 赛场瞬间
 ```
 
-Web、API 和媒体服务都由 Nginx 统一为同源地址，避免 MVP 阶段增加 CORS 配置。直播采用 HLS 以覆盖主流浏览器；延迟通常为数秒，低延迟协议留到基础链路稳定后评估。
+Web、API 和媒体文件通过 Nginx 统一为同源地址，减少 MVP 阶段的 CORS 和跨域配置。直播采用 HLS，覆盖主流桌面浏览器；通常会有数秒延迟，低延迟方案留到后续需求明确后评估。
 
 ## 当前取舍
 
-- 点播元数据从目录生成，不使用数据库，降低首次运行成本。
-- 使用 SRS 处理媒体协议，不重复开发 RTMP/HLS 服务；所有面向用户的页面由本仓库开发。
-- 前后端单仓库，接口和 UI 变更可在同一 PR 审查。
-- 运行数据通过 bind mount 保存，便于开发者查看和清理。
+- 点播和照片元数据从目录生成，不使用数据库，降低首次部署成本。
+- 使用 SRS 处理 RTMP/HLS，不重复开发媒体协议服务；用户界面由本仓库自主开发。
+- 前后端单仓库，接口、UI、文档可以在同一 PR 中审查。
+- 运行数据通过 bind mount 保存，方便开发者查看、备份和清理。
+- SRS 管理端口 `1985` 只绑定服务器本机回环地址，不暴露公网。
+- 云服务器部署保留 Docker Compose，不额外引入复杂运维平台。
+
+## 可靠性设计
+
+API 通过内部地址 `http://media:1985` 查询 SRS 开播状态。查询失败时返回 `unknown`，不会伪装成停播；默认频道可等待开播，其他合法活跃流会被自动发现。
+
+前端每次请求完成后再等待一段时间刷新，避免请求堆积；播放器在 HLS 首次 404、断流或网络抖动时按退避策略重连，并保留手动重试入口。
+
+Nginx 直接提供点播视频和照片，点播保留 Range 请求，照片和视频都拒绝隐藏路径、符号链接和明显不合法文件。运行日志限制大小和份数，避免长时间运行撑满磁盘。
+
+## 已验证状态
+
+截至 2026-09-13：
+
+- 本地 Docker Compose 四个服务已验证 healthy。
+- API、Web、HTTP 冒烟和媒体链路测试已通过。
+- FFmpeg 模拟 RTMP 推流到 SRS、HLS 生成和音视频解码已通过。
+- 云服务器已验证公网 HTTP、API、HLS 观看链路可用。
+- 云服务器安全组开放 `1935/tcp` 后，公网 RTMP 端口已可达。
+- Windows OBS 已能连接到 SRS；OBS 地址必须填写 `rtmp://<server-ip>:1935/live`，串流密钥单独填写 `demo`。
 
 ## 后续演进
 
-确认 MVP 后按需求增加 SQLite 元数据、赛事管理、封面上传、鉴权、录制转点播和自动化端到端测试。只有单机容量或可用性要求明确时再拆分服务。
-
-## 可靠性补充
-
-API 使用内部 `http://media:1985` 查询开播状态，前端每 10 秒刷新；查询失败标为 unknown，不能伪装成停播。额外活跃流自动发现，默认频道可等待开播。Nginx 保持点播字节服务职责，API 提供目录和详情；没有数据库或上传服务。设计取舍详见 [改进决策](improvements.md)。
+下一阶段按课堂交付优先级推进：真实 OBS 视频源推流、多设备观看测试、HTTPS/域名、强推流密钥、真实点播素材和照片素材。再往后可增加 SQLite 赛事元数据、后台上传、推流鉴权、录制转点播、赛程比分和基础监控。
