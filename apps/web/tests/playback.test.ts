@@ -31,6 +31,19 @@ async function routing(path: string) {
   return router
 }
 describe('live recovery', () => {
+  it('adapts the frame to portrait metadata and toggles fill mode', async () => {
+    const wrapper = mount(HlsVideo, { props: { src: '/live.m3u8', title: '比赛' } })
+    const element = wrapper.get('video').element
+    Object.defineProperties(element, { videoWidth: { configurable: true, value: 720 }, videoHeight: { configurable: true, value: 1280 } })
+    await wrapper.get('video').trigger('loadedmetadata')
+    expect(wrapper.get('.player-frame').classes()).toContain('is-portrait')
+    expect(wrapper.get('.player-frame').attributes('style')).toContain('--video-aspect: 720 / 1280')
+    expect(wrapper.text()).toContain('输入 720 × 1280')
+    const fitButton = wrapper.get('[aria-pressed="false"]')
+    await fitButton.trigger('click')
+    expect(wrapper.get('video').classes()).toContain('fit-cover')
+    expect(wrapper.get('[aria-pressed="true"]').text()).toBe('完整显示')
+  })
   it('retries fatal network errors and cancels timers on exit', async () => {
     vi.useFakeTimers()
     const wrapper = mount(HlsVideo, { props: { src: '/live.m3u8', title: '比赛' } })
@@ -52,7 +65,7 @@ describe('live recovery', () => {
     await nextTick()
     expect(first.recoverMediaError).toHaveBeenCalledTimes(2)
     expect(wrapper.text()).toContain('自动重试')
-    await wrapper.get('button').trigger('click')
+    await wrapper.findAll('button').at(-1)!.trigger('click')
     expect(state.instances).toHaveLength(2)
     expect(first.destroy).toHaveBeenCalled()
   })

@@ -38,6 +38,27 @@
 
 推流后等待 5-10 秒，SRS 生成足够 HLS 分片后网页会开始播放。
 
+## iPhone 使用 Larix 横屏直推
+
+在 Larix 的 `Settings → Capture and encoding → Video` 中使用以下设置：
+
+```text
+Orientation：Always horizontal / Landscape
+Live rotation：Lock while broadcasting
+Resolution：1280x720
+Frame rate：30 FPS
+Video codec：H.264 / AVC
+Keyframe interval：2 秒
+Video bitrate：2500-3500 kbps
+Audio codec：AAC
+```
+
+先停止推流，横持手机并确认预览画面方向正确，再开始推流。`Lock while broadcasting` 会锁定开播时的方向；如果竖持手机开始后再旋转，编码画面可能保持竖向。测试方向变化时可暂时使用 `Follow screen rotation`，正式直播建议锁定横屏，避免手机晃动触发旋转。
+
+播放器会按视频元数据中的真实宽高自动选择横屏、竖屏或方形容器，并允许在“完整显示”和“填满画面”之间切换。若推流软件已经把侧转画面和黑边合成为一个 16:9 视频帧，网页无法从该帧恢复原始方向，必须先修正手机端的编码方向并重新推流。
+
+Larix 免费模式显示的测试水印属于推流端写入视频的内容，网页和 SRS 无法无损去除。正式直播需在 Larix 中启用可移除默认水印的版本，或改用经过验证、支持自定义 RTMP 且不写入水印的推流端。
+
 ## 云服务器端口
 
 云服务器安全组和系统防火墙需要允许：

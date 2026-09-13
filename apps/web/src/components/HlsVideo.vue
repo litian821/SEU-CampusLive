@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import Hls from 'hls.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useVideoLayout } from '../composables/useVideoLayout'
 const props = defineProps<{ src: string; title: string; poster?: string }>()
 const video = ref<HTMLVideoElement>()
 const message = ref('正在连接直播…')
+const { fit, fitLabel, frameClass, frameStyle, resolution, resetVideoLayout, syncVideoLayout, toggleFit, videoClass } = useVideoLayout(video)
 let cleanup = () => {}
 function start() {
   cleanup()
+  resetVideoLayout()
   const element = video.value
   if (!element) return
   let hls: Hls | undefined
@@ -65,4 +68,15 @@ onMounted(start)
 watch(() => props.src, start)
 onBeforeUnmount(() => cleanup())
 </script>
-<template><div class="player-frame"><video ref="video" controls playsinline :poster="poster" :aria-label="title" /></div><div class="player-feedback"><p role="status">{{ message || '直播已就绪，点击播放按钮观看。' }}</p><button class="btn small ghost" @click="start">重新连接</button></div></template>
+<template>
+  <div class="player-frame" :class="frameClass" :style="frameStyle">
+    <video ref="video" controls playsinline :poster="poster" :aria-label="title" :class="videoClass" @loadedmetadata="syncVideoLayout" />
+  </div>
+  <div class="player-feedback">
+    <p role="status">{{ message || '直播已就绪，点击播放按钮观看。' }}<span v-if="resolution" class="video-resolution">输入 {{ resolution }}</span></p>
+    <div class="player-actions">
+      <button class="btn small ghost" :aria-pressed="fit === 'cover'" @click="toggleFit">{{ fitLabel }}</button>
+      <button class="btn small ghost" @click="start">重新连接</button>
+    </div>
+  </div>
+</template>
