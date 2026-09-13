@@ -8,7 +8,7 @@ MVP 只解决两条核心链路：OBS 推流后可在自研 Web 页面观看；�
 
 | 组件 | 技术 | 职责 |
 | --- | --- | --- |
-| Web | React、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
+| Web | Vue 3、TypeScript、Vite、hls.js | 五个基础页面、HLS 直播播放、HTML5 点播 |
 | API | FastAPI、Python | 健康检查、直播目录、点播文件索引 |
 | Media | SRS 6 | 接收 RTMP，生成 HLS |
 | Gateway | Nginx | 单一 HTTP 入口、页面/API 反向代理、直播和点播文件、Range 请求 |
@@ -34,3 +34,7 @@ Web、API 和媒体服务都由 Nginx 统一为同源地址，避免 MVP 阶段�
 ## 后续演进
 
 确认 MVP 后按需求增加 SQLite 元数据、赛事管理、封面上传、鉴权、录制转点播和自动化端到端测试。只有单机容量或可用性要求明确时再拆分服务。
+
+## 可靠性补充
+
+API 使用内部 `http://media:1985` 查询开播状态，前端每 10 秒刷新；查询失败标为 unknown，不能伪装成停播。额外活跃流自动发现，默认频道可等待开播。Nginx 保持点播字节服务职责，API 提供目录和详情；没有数据库或上传服务。设计取舍详见 [改进决策](improvements.md)。

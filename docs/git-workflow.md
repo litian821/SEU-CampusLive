@@ -5,7 +5,7 @@
 ```bash
 git switch main
 git pull --ff-only
-git switch -c feature/live-status
+git switch -c codex/feature-live-status
 ```
 
 提交使用 Conventional Commits，例如：

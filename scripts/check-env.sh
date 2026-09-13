@@ -5,7 +5,7 @@ failures=0
 
 check_command() {
   local command_name="$1"
-  if command -v "$command_name" >/dev/null 2>&1; then
+  if command -v "$command_name" >/dev/null 2>&1 && "$command_name" --version >/dev/null 2>&1; then
     printf '[ok] %-16s %s\n' "$command_name" "$("$command_name" --version 2>/dev/null | head -n 1)"
   else
     printf '[missing] %s\n' "$command_name"
@@ -29,7 +29,7 @@ if command -v docker >/dev/null 2>&1; then
   if docker info >/dev/null 2>&1; then
     printf '[ok] docker daemon is reachable\n'
   else
-    printf '[blocked] Docker daemon is not reachable; start Docker Desktop and enable WSL integration.\n'
+    printf '[blocked] Docker daemon is not reachable; start native Docker (sudo systemctl start docker), or enable Docker Desktop WSL integration; see docs/development.md.\n'
     failures=$((failures + 1))
   fi
 fi

@@ -1,0 +1,1 @@
+<template><svg class="campus-mark" viewBox="0 0 240 104" fill="none" stroke="currentColor" aria-hidden="true"><path d="M8 98h224M20 91h200M35 86h170V48H35zm0-38 85-28 85 28M69 32a51 51 0 0 1 102 0M78 29a42 42 0 0 1 84 0M120 1v13M108 5h24M51 53v28m18-28v28m18-28v28m18-28v28m30-28v28m18-28v28m18-28v28m18-28v28M32 48h176M115 65h10v21" /></svg></template>

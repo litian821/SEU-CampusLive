@@ -8,7 +8,7 @@
 
 ## 目录与文件管理
 
-- `apps/web/`：React + TypeScript Web 客户端。
+- `apps/web/`：Vue 3 + TypeScript Web 客户端。
 - `apps/api/`：FastAPI 业务 API。
 - `infra/`：SRS、Nginx 等服务配置。
 - `storage/`：本地运行数据；只提交占位文件和说明，不提交媒体与运行产物。
@@ -21,7 +21,7 @@
 ## Git 规范
 
 - 主分支名为 `main`，必须保持可运行。
-- 功能分支使用 `feature/<topic>`，修复分支使用 `fix/<topic>`，文档分支使用 `docs/<topic>`。
+- 功能分支使用 `codex/feature-<topic>`，修复分支使用 `codex/fix-<topic>`，文档分支使用 `codex/docs-<topic>`。
 - Commit 遵循 Conventional Commits：`feat:`、`fix:`、`docs:`、`test:`、`refactor:`、`chore:`。
 - 每个 commit 只表达一个完整意图，信息使用英文祈使语气，不允许 `update`、`changes`、`tmp` 等无意义说明。
 - 禁止强推共享分支、改写他人已发布历史、提交秘密或大文件。
@@ -78,3 +78,13 @@
 - 每个阶段先完成可审查的实现，再运行对应验证，再创建语义清晰的 commit。
 - 遇到失败应定位根因；若受外部环境阻塞，记录已验证事实、复现命令和解除阻塞后的下一步。
 - 只有需要凭据、创建公开仓库、删除重要数据、覆盖他人工作或存在重大需求冲突时才向用户询问。
+
+- Docker 测试任务必须显式重建相关测试镜像，避免验证旧代码。远程 CI 与本地测试结果分别记录，不得混称。
+- 环境修复记录必须反映实际使用的 Docker 运行方式；代理和凭据配置仅保存在主机，不入库。
+
+## 赛场瞬间规则
+
+- 比赛原图放 `storage/photos/`，禁止提交 Git；小型产品封面放 `apps/web/public/brand/` 并记录来源和处理方式。
+- 相册通过维护脚本导入，拒绝同名覆盖；目录 API 与 Nginx 均过滤隐藏路径、符号链接和非图片内容。
+- UI 的缺失数据不得用虚构赛事、比分、日期或在线人数填充。
+- Vue 使用语义组件、共享 Design Tokens 和类型完整的数据适配；修改后运行 lint、typecheck、单元测试、build 与适用浏览器回归。

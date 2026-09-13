@@ -1,5 +1,11 @@
 name: campus-sports-platform
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   api:
     build:
@@ -7,11 +13,16 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_NAME: ${APP_NAME:-Campus Sports Platform}
-      LIVE_APP: ${LIVE_APP:-live}
+      SRS_API_URL: http://media:1985
+      LIVE_TITLE: ${LIVE_TITLE:-院系杯 · 网络空间安全学院 vs 电子科学与工程学院}
+      LIVE_SPORT: ${LIVE_SPORT:-篮球}
+      LIVE_VENUE: ${LIVE_VENUE:-东南大学}
       LIVE_STREAM_KEY: ${LIVE_STREAM_KEY:-demo}
       VOD_DIR: ${VOD_DIR:-/data/vod}
+      PHOTO_DIR: /data/photos
     volumes:
       - ./storage/vod:/data/vod:ro
+      - ./storage/photos:/data/photos:ro
     expose:
       - "8000"
     healthcheck:
@@ -20,6 +31,7 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    logging: *default-logging
     restart: unless-stopped
 
   api-test:
@@ -29,15 +41,22 @@ services:
     profiles: ["tools"]
 
   media:
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/1985 && printf 'GET /api/v1/versions HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     image: ossrs/srs:6.0.191
     volumes:
       - ./infra/srs/srs.conf:/usr/local/srs/conf/docker.conf:ro
       - ./storage/live:/usr/local/srs/objs/nginx/html/live
     ports:
       - "${RTMP_PORT:-1935}:1935"
-      - "${SRS_API_PORT:-1985}:1985"
+      - "127.0.0.1:${SRS_API_PORT:-1985}:1985"
     expose:
       - "8080"
+    logging: *default-logging
     restart: unless-stopped
 
   web-build:
@@ -57,6 +76,7 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    logging: *default-logging
     restart: unless-stopped
 
   gateway:
@@ -67,11 +87,12 @@ services:
       web:
         condition: service_healthy
       media:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./storage/live:/srv/live:ro
       - ./storage/vod:/srv/vod:ro
+      - ./storage/photos:/srv/photos:ro
     ports:
       - "${WEB_PORT:-8080}:80"
     healthcheck:
@@ -79,4 +100,5 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    logging: *default-logging
     restart: unless-stopped

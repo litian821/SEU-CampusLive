@@ -1,0 +1,37 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose
+        run: docker compose config --quiet
+      - name: API tests
+        run: docker compose run --build --rm api-test
+      - name: Web tests and production build
+        run: docker compose run --build --rm web-build npm run check
+      - name: Start platform
+        run: docker compose up --build --wait --wait-timeout 120
+      - name: Smoke test
+        run: python3 tests/smoke.py
+      - name: Real media pipeline
+        run: KEEP_TEST_VIDEO=1 make test-media
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser playback tests
+        working-directory: tests/browser
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm test
+      - name: Service logs
+        if: failure()
+        run: docker compose logs --tail=100
+      - name: Stop platform
+        if: always()
+        run: docker compose down
