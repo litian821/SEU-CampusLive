@@ -294,6 +294,12 @@ make test
 docs/design/campus-live-v1/DESIGN.md
 ```
 
+## 团队交接
+
+电脑本地开发、云服务器部署、OBS 非摄像头直播测试和课堂交付检查见：
+
+- docs/operations-handoff.md
+
 ## 许可证
 
 本项目目前用于东南大学学生团队课程与实践项目。
